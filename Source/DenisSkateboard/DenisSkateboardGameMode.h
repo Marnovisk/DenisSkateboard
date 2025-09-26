@@ -13,6 +13,9 @@ class ADenisSkateboardGameMode : public AGameModeBase
 
 public:
 	ADenisSkateboardGameMode();
+
+protected:
+	virtual void StartPlay() override;
 };
 
 
