@@ -24,21 +24,26 @@ ASkateCharachter::ASkateCharachter()
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SkeletalMeshAsset(TEXT("/Game/Characters/Mannequins/Meshes/SKM_Manny.SKM_Manny"));
+
+
 	// Usa o capsule do ACharacter
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
+		
+	//-----Only uncomment this if using as sub clas of APawn and not of ACharacter
 
+	//--SkeltalMesh Setup for pawn
+	/*SKMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SKMesh"));
+	SKMesh->SetupAttachment(RootComponent);
+	SKMesh->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
+	SKMesh->SetRelativeRotation(FRotator(0.0f, 270.0f, 0.0f));
+	SKMesh->SetSkeletalMesh(SkeletalMeshAsset.Object);*/
+
+	//--CapsuleCollision Setup for pawn
 	/*CapsuleCollision = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleCollision"));
 	CapsuleCollision->InitCapsuleSize(42.f, 96.0f);
 	CapsuleCollision->SetCollisionProfileName(TEXT("Pawn"));
 	RootComponent = CapsuleCollision;*/
-
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SkeletalMeshAsset(TEXT("/Game/Characters/Mannequins/Meshes/SKM_Manny.SKM_Manny"));
-
-	/*SKMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SKMesh"));
-	SKMesh->SetupAttachment(RootComponent);
-	SKMesh->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
-	SKMesh->SetRelativeRotation(FRotator(0.0f, 270.0f, 0.0f));	
-	SKMesh->SetSkeletalMesh(SkeletalMeshAsset.Object);*/
 
 	if (SkeletalMeshAsset.Succeeded())
 	{
@@ -58,6 +63,8 @@ ASkateCharachter::ASkateCharachter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to ar
+
+	AcomulatedVelocity = GetCharacterMovement()->MaxWalkSpeed;
 }
 
 // Called when the game starts or when spawned
@@ -70,8 +77,11 @@ void ASkateCharachter::BeginPlay()
 void ASkateCharachter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	GetCharacterMovement()->MaxWalkSpeed = FMath::FInterpTo(GetCharacterMovement()->MaxWalkSpeed, AcomulatedVelocity, DeltaTime, 1);
-	
+	if (GetCharacterMovement()->MaxWalkSpeed != AcomulatedVelocity)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = FMath::FInterpTo(GetCharacterMovement()->MaxWalkSpeed, AcomulatedVelocity + 1, DeltaTime, 1);
+		UE_LOG(LogTemp, Warning, TEXT("MaxVelocity: %f"), GetCharacterMovement()->MaxWalkSpeed);
+	}
 }
 
 // Called to bind functionality to input
@@ -82,8 +92,7 @@ void ASkateCharachter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAxis("MoveForward", this, &ASkateCharachter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ASkateCharachter::MoveAround);
 
-	PlayerInputComponent->BindAxis("Up", this, &ASkateCharachter::IncreaseVelocity);
-
+	PlayerInputComponent->BindAxis("SpeedUp", this, &ASkateCharachter::IncreaseVelocity);
 	PlayerInputComponent->BindAxis("Break", this, &ASkateCharachter::DecreaseVelocity);
 
 	// Liga o eixo "LookUp" à função que controla o Pitch (olhar p/ cima e baixo)
@@ -116,7 +125,6 @@ void ASkateCharachter::MoveAround(float Value)
 	if (Controller && Value != 0.0f)
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("MOVE"));
-
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
@@ -128,29 +136,25 @@ void ASkateCharachter::MoveAround(float Value)
 
 void ASkateCharachter::IncreaseVelocity(float Value)
 {	
-	if (Controller && GetCharacterMovement()->MaxWalkSpeed < 800)
+	if (Controller && Value > 0.0f)
 	{
-		AcomulatedVelocity += Value;
-		//GetCharacterMovement()->MaxWalkSpeed += AcomulatedVelocity;
+		if (AcomulatedVelocity < 1000)
+		{
+			AcomulatedVelocity += Value;
+		}
 		UE_LOG(LogTemp, Warning, TEXT("AcomulatedVelocity: %f"), AcomulatedVelocity);
-		UE_LOG(LogTemp, Warning, TEXT("MaxVelocity: %f"), GetCharacterMovement()->MaxWalkSpeed)
 	}
-	/*AcomulatedVelocity += Value;
-	GetCharacterMovement()->MaxWalkSpeed += AcomulatedVelocity*/;
-	//MoveForward(AcomulatedVelocity);
-	//UE_LOG(LogTemp, Warning, TEXT("AcomulatedVelocity: %f"), AcomulatedVelocity);
 }
 
 void ASkateCharachter::DecreaseVelocity(float Value)
 {
-	if (Controller && GetCharacterMovement()->MaxWalkSpeed > 10.0f)
+	if (Controller && Value < 0.0f)
 	{
-		AcomulatedVelocity += Value;
-		//GetCharacterMovement()->MaxWalkSpeed += AcomulatedVelocity;
-		//GetCharacterMovement()->MaxWalkSpeed -= AcomulatedVelocity;
-		//MoveForward(AcomulatedVelocity);
+		if (AcomulatedVelocity > 100)
+		{
+			AcomulatedVelocity += Value;
+		}		
 		UE_LOG(LogTemp, Warning, TEXT("AcomulatedVelocity: %f"), AcomulatedVelocity);
-		UE_LOG(LogTemp, Warning, TEXT("MaxVelocity: %f"), GetCharacterMovement()->MaxWalkSpeed);
 	}
 }
 

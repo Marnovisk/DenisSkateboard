@@ -32,11 +32,9 @@ void ADenisSkateboardGameMode::StartPlay()
         InputSettings->AddAxisMapping(FInputAxisKeyMapping("MoveRight", EKeys::D, 1.f));
         InputSettings->AddAxisMapping(FInputAxisKeyMapping("MoveRight", EKeys::A, -1.f));
 
-        InputSettings->AddAxisMapping(FInputAxisKeyMapping("Up", EKeys::V, 1.f));
-
         // Pulo e boost
         InputSettings->AddActionMapping(FInputActionKeyMapping("Jump", EKeys::SpaceBar));
-        InputSettings->AddActionMapping(FInputActionKeyMapping("SpeedUp", EKeys::LeftShift));
+        InputSettings->AddAxisMapping(FInputAxisKeyMapping("SpeedUp", EKeys::LeftShift, 1.f));
 
         InputSettings->AddAxisMapping(FInputAxisKeyMapping("LookUp", EKeys::MouseY, -1.f));
         InputSettings->AddAxisMapping(FInputAxisKeyMapping("LookAround", EKeys::MouseX, 1.f));
