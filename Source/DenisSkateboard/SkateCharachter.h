@@ -45,6 +45,10 @@ class DENISSKATEBOARD_API ASkateCharachter : public ACharacter
 	UPROPERTY(EditAnywhere, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	UInputAction* LookAction;
 
+	UPROPERTY(EditAnywhere, Category = "Movement", meta = (AllowPrivateAccess = "true"))
+	float AcomulatedVelocity;
+
+	float DesiredVelocity;
 
 
 public:
@@ -64,10 +68,14 @@ public:
 
 protected:
 
-	/** Called for movement input */
-	void Move(float Value);
+	/** Called for Forward movement input */
+	void MoveForward(float Value);
 
-	/** Called for looking input */
-	void Look(const FInputActionValue& Value);
+	/** Called for Around movement input */
+	void MoveAround(float Value);
+
+	void IncreaseVelocity(float Value);
+
+	void DecreaseVelocity(float Value);
 
 };
