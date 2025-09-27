@@ -42,25 +42,30 @@ class DENISSKATEBOARD_API ASkateCharachter : public ACharacter
 
 	UPROPERTY(EditAnywhere, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	UInputAction* LookAction;
-	
-	
+
+
 	//--Velocity Control Properties
 	UPROPERTY(EditAnywhere, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 	float AcomulatedVelocity;
 
 	//--Animation Properties
+	//Idle Animation
 	UPROPERTY(EditAnywhere, Category = "Animation", meta = (AllowPrivateAccess = "true"))
 	UAnimationAsset* DefaultAnim;
 
+	//SpeedUp Animation
 	UPROPERTY(EditAnywhere, Category = "Animation", meta = (AllowPrivateAccess = "true"))
 	UAnimationAsset* SpeedUpAnim;
 
+	//Jump Animation
 	UPROPERTY(EditAnywhere, Category = "Animation", meta = (AllowPrivateAccess = "true"))
 	UAnimationAsset* JumpAnim;
 
+	//End Jump Animation float Controll
 	UPROPERTY(EditAnywhere, Category = "Animation", meta = (AllowPrivateAccess = "true"))
 	float JumpAnimEndTime;
 
+	//End Jump Animation bool Controll
 	UPROPERTY(EditAnywhere, Category = "Animation", meta = (AllowPrivateAccess = "true"))
 	bool bIsPlayingJump;
 
@@ -77,7 +82,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -85,7 +90,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual void Jump() override;
-	
+
 	void IncreaseScore();
 
 protected:

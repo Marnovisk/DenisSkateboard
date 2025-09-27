@@ -9,17 +9,17 @@
 // Sets default values
 ASkateObstacle::ASkateObstacle()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+    // Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+    PrimaryActorTick.bCanEverTick = true;
 
-    
+
 
     static ConstructorHelpers::FObjectFinder<UStaticMesh> StaticMeshAsset(TEXT("/Game/Deko_MatrixDemo/City/Meshes/SM_BLDG_Prop_SB_Awning_B01_N1.SM_BLDG_Prop_SB_Awning_B01_N1"));
-	
-	//--SkeltalMesh Setup for Actor
-	SMMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SMMesh"));
-	SMMesh->SetRelativeLocation(FVector(0.0f, 0.0f, -50.0f));
-	SMMesh->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));
+
+    //--SkeltalMesh Setup for Actor
+    SMMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SMMesh"));
+    SMMesh->SetRelativeLocation(FVector(0.0f, 0.0f, -50.0f));
+    SMMesh->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));
     RootComponent = SMMesh;
     if (StaticMeshAsset.Succeeded())
     {
@@ -31,18 +31,20 @@ ASkateObstacle::ASkateObstacle()
 // Called when the game starts or when spawned
 void ASkateObstacle::BeginPlay()
 {
-	Super::BeginPlay();
-	
+    Super::BeginPlay();
+
 }
 
 // Called every frame
 void ASkateObstacle::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
+    Super::Tick(DeltaTime);
 
+    //Trace position Setup
     FVector Start = GetActorLocation() + FVector(0.0f, 0.0f, 50.0f);
-    FVector End = Start + FVector(0.0f, 0.0f, 200.0f); // Trace distance
+    FVector End = Start + FVector(0.0f, 0.0f, 200.0f);
 
+    //Hit Results info setup
     FHitResult HitResult;
     FCollisionQueryParams TraceParams;
     TraceParams.AddIgnoredActor(this);
@@ -50,6 +52,7 @@ void ASkateObstacle::Tick(float DeltaTime)
 
     float SphereRadius = 50.0f;
 
+    //Hit Results info
     bool bHit = GetWorld()->SweepSingleByChannel(
         HitResult,
         Start,
@@ -60,6 +63,7 @@ void ASkateObstacle::Tick(float DeltaTime)
         TraceParams
     );
 
+    //Checking if hitted actor is player
     if (bHit)
     {
         UE_LOG(LogTemp, Warning, TEXT("Hit actor: %s"), *HitResult.GetActor()->GetName());

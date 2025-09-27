@@ -19,11 +19,12 @@ void ASkateHUD::DrawHUD()
     ASkateCharachter* SkateChar = Cast<ASkateCharachter>(PC->GetPawn());
     if (!SkateChar) return;
 
-    // Pegando valores
-    float CurrentSpeed = SkateChar->GetVelocity().Size();
-    int32 Score = SkateChar->Score;       // você cria essa variável no character
 
-    // HUD na tela (posição X, Y)
+    //Getting variables references on character
+    float CurrentSpeed = SkateChar->GetVelocity().Size();
+    int32 Score = SkateChar->Score;
+
+    //Seeting HUD texts
     FString SpeedText = FString::Printf(TEXT("Speed: %.1f"), CurrentSpeed);
     FString ScoreText = FString::Printf(TEXT("Score: %d"), Score);
 
@@ -32,6 +33,7 @@ void ASkateHUD::DrawHUD()
 
     FString ExitText = FString::Printf(TEXT(" 'ESC' to EXIT"));
 
+    //Seeting HUD texts location
     DrawText(SpeedText, FColor::White, 50.f, 50.f, nullptr, 1.2f, false);
     DrawText(ScoreText, FColor::Yellow, 50.f, 110.f, nullptr, 1.2f, false);
 

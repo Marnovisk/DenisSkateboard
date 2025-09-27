@@ -9,42 +9,35 @@
 
 ADenisSkateboardGameMode::ADenisSkateboardGameMode()
 {
-	// set default pawn class to our Blueprinted character
-	/*static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter"));
-	if (PlayerPawnBPClass.Class != NULL)
-	{
-		DefaultPawnClass = PlayerPawnBPClass.Class;
-	}*/
-
     DefaultPawnClass = ASkateCharachter::StaticClass();
     HUDClass = ASkateHUD::StaticClass();
 }
 
 void ADenisSkateboardGameMode::StartPlay()
 {
-	Super::StartPlay();
+    Super::StartPlay();
 
-	UInputSettings* InputSettings = const_cast<UInputSettings*>(GetDefault<UInputSettings>());
+    UInputSettings* InputSettings = const_cast<UInputSettings*>(GetDefault<UInputSettings>());
 
     if (InputSettings)
     {
-        // Movimentação
+        //Movement
         InputSettings->AddAxisMapping(FInputAxisKeyMapping("MoveForward", EKeys::W, 1.f));
-        InputSettings->AddAxisMapping(FInputAxisKeyMapping("Break", EKeys::S, -1.f));
         InputSettings->AddAxisMapping(FInputAxisKeyMapping("MoveRight", EKeys::D, 1.f));
         InputSettings->AddAxisMapping(FInputAxisKeyMapping("MoveRight", EKeys::A, -1.f));
 
-        // Pulo e boost
+        //Jump  and speed controll
         InputSettings->AddActionMapping(FInputActionKeyMapping("Jump", EKeys::SpaceBar));
         InputSettings->AddAxisMapping(FInputAxisKeyMapping("SpeedUp", EKeys::LeftShift, 1.f));
+        InputSettings->AddAxisMapping(FInputAxisKeyMapping("Break", EKeys::S, -1.f));
 
+        //Camera 
         InputSettings->AddAxisMapping(FInputAxisKeyMapping("LookUp", EKeys::MouseY, -1.f));
         InputSettings->AddAxisMapping(FInputAxisKeyMapping("LookAround", EKeys::MouseX, 1.f));
 
+        //Exit
         InputSettings->AddActionMapping(FInputActionKeyMapping("Exit", EKeys::Escape));
 
         InputSettings->SaveKeyMappings();
-
-        UE_LOG(LogTemp, Display, TEXT("Input mappings configurados via GameMode (C++)."));
     }
 }

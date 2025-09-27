@@ -23,7 +23,7 @@
 // Sets default values
 ASkateCharachter::ASkateCharachter()
 {
- 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	// Don't rotate when the controller rotates. Let that just affect the camera.
@@ -31,6 +31,7 @@ ASkateCharachter::ASkateCharachter()
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
+	//Assets references finder
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SkeletalMeshAsset(TEXT("/Game/Animations/Y_Bot_Skateboarding.Y_Bot_Skateboarding"));
 	static ConstructorHelpers::FObjectFinder<UAnimationAsset> DefaultAnimAsset(TEXT("/Game/Animations/Y_Bot_Skateboarding_Anim.Y_Bot_Skateboarding_Anim"));
 	static ConstructorHelpers::FObjectFinder<UAnimationAsset> SpeedUpAnimAsset(TEXT("/Game/Animations/Y_Bot_Skateboarding_Row.Y_Bot_Skateboarding_Row"));
@@ -40,6 +41,7 @@ ASkateCharachter::ASkateCharachter()
 	// Usa o capsule do ACharacter
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
+	//Assets references setter
 	if (SkeletalMeshAsset.Succeeded())
 	{
 		GetMesh()->SetSkeletalMesh(SkeletalMeshAsset.Object);
@@ -63,8 +65,8 @@ ASkateCharachter::ASkateCharachter()
 		JumpAnim = JumpAnimAsset.Object;
 	}
 
-	
 
+	//Skateboart StaticMesh setup
 	SMSkateMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SMSkateMesh"));
 	SMSkateMesh->SetRelativeLocation(FVector(0.0f, 0.0f, -5.0f));
 	SMSkateMesh->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));
@@ -75,21 +77,22 @@ ASkateCharachter::ASkateCharachter()
 		SMSkateMesh->SetStaticMesh(StaticMeshAsset.Object);
 	}
 
-	// Create a camera boom (pulls in towards the player if there is a collision)
+	//Camera boom setup
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 400.0f; // The camera follows at this distance behind the character	
 	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
 
-	// Create a follow camera
+	//Follow camera setup
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to ar
 
+	//Velocity controll setup
 	GetCharacterMovement()->BrakingDecelerationWalking = 200.f;
-
 	AcomulatedVelocity = GetCharacterMovement()->MaxWalkSpeed;
 
+	//Variables Setup
 	Score = 0;
 	JumpAnimEndTime = 0.f;
 	bIsPlayingJump = false;
@@ -139,7 +142,7 @@ void ASkateCharachter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAxis("SpeedUp", this, &ASkateCharachter::IncreaseVelocity);
 	PlayerInputComponent->BindAxis("Break", this, &ASkateCharachter::DecreaseVelocity);
 
-	
+
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 	PlayerInputComponent->BindAxis("LookAround", this, &APawn::AddControllerYawInput);
 
@@ -170,11 +173,11 @@ void ASkateCharachter::MoveAround(float Value)
 	{
 		AddActorLocalRotation(FRotator(0.f, Value, 0.f));
 	}
-	
+
 }
 
 void ASkateCharachter::IncreaseVelocity(float Value)
-{	
+{
 	if (Controller && Value > 0.0f)
 	{
 		if (AcomulatedVelocity < 1000)
