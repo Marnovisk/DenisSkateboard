@@ -12,18 +12,19 @@ ASkateObstacle::ASkateObstacle()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	//--CapsuleCollision Setup for Actor
-	BoxCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxCollision"));
-	BoxCollision->InitBoxExtent(FVector(50.0f, 50.0f, 50.0f));
-	BoxCollision->SetCollisionProfileName(TEXT("Pawn"));
-	RootComponent = BoxCollision;
+    
 
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> StaticMeshAsset(TEXT("/Game/Deko_MatrixDemo/City/Meshes/SM_BLDG_Prop_SB_Awning_B01_N1.SM_BLDG_Prop_SB_Awning_B01_N1"));
+	
 	//--SkeltalMesh Setup for Actor
 	SMMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SMMesh"));
-	SMMesh->SetupAttachment(RootComponent);
 	SMMesh->SetRelativeLocation(FVector(0.0f, 0.0f, -50.0f));
 	SMMesh->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));
-	//SMMesh->SetSkeletalMesh(StaticMeshAsset.Object);
+    RootComponent = SMMesh;
+    if (StaticMeshAsset.Succeeded())
+    {
+        SMMesh->SetStaticMesh(StaticMeshAsset.Object);
+    }
 
 }
 
@@ -39,20 +40,23 @@ void ASkateObstacle::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-    FVector Start = GetActorLocation();
-    FVector ForwardVector = GetActorForwardVector();
+    FVector Start = GetActorLocation() + FVector(0.0f, 0.0f, 50.0f);
     FVector End = Start + FVector(0.0f, 0.0f, 200.0f); // Trace distance
 
     FHitResult HitResult;
     FCollisionQueryParams TraceParams;
-    TraceParams.AddIgnoredActor(this); // Ignore self
+    TraceParams.AddIgnoredActor(this);
     TraceParams.AddIgnoredActor(GetAttachParentActor());
 
-    bool bHit = GetWorld()->LineTraceSingleByChannel(
+    float SphereRadius = 50.0f;
+
+    bool bHit = GetWorld()->SweepSingleByChannel(
         HitResult,
         Start,
         End,
+        FQuat::Identity,
         ECC_Pawn,
+        FCollisionShape::MakeSphere(SphereRadius),
         TraceParams
     );
 
@@ -60,19 +64,15 @@ void ASkateObstacle::Tick(float DeltaTime)
     {
         UE_LOG(LogTemp, Warning, TEXT("Hit actor: %s"), *HitResult.GetActor()->GetName());
 
-        if (ASkateCharachter* Car = Cast<ASkateCharachter>(HitResult.GetActor()))
+        if (ASkateCharachter* Char = Cast<ASkateCharachter>(HitResult.GetActor()))
         {
-            UE_LOG(LogTemp, Log, TEXT("LineTrace hit CarCore: %s"), *Car->GetName());
+            if (PlayerChar != Char)
+            {
+                UE_LOG(LogTemp, Log, TEXT("SphereSweep hit SkateChar: %s"), *Char->GetName());
+                Char->IncreaseScore();
+                PlayerChar = Char;
+            }
         }
-
-        // Debug visualization
-        DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 0.1f);
-        DrawDebugPoint(GetWorld(), HitResult.ImpactPoint, 10.0f, FColor::Yellow, false, 0.1f);
     }
-    else
-    {
-        DrawDebugLine(GetWorld(), Start, End, FColor::Blue, false, 0.1f);
-    }
-
 }
 

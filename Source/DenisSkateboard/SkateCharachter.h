@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-//#include "GameFramework/Pawn.h"
 #include "GameFramework/Character.h"
 #include "SkateCharachter.generated.h"
 
@@ -13,6 +12,7 @@ class UInputMappingContext;
 class UInputAction;
 class UCapsuleComponent;
 class USkeletalMeshComponent;
+class UAnimationAsset;
 struct FInputActionValue;
 
 UCLASS()
@@ -20,22 +20,20 @@ class DENISSKATEBOARD_API ASkateCharachter : public ACharacter
 {
 	GENERATED_BODY()
 
-	//Components Properties
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision", meta = (AllowPrivateAccess = "true"))
-	UCapsuleComponent* CapsuleCollision;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh", meta = (AllowPrivateAccess = "true"))
-	USkeletalMeshComponent* SKMesh;
+	UStaticMeshComponent* SMSkateMesh;
 
+	//--Camera Properties
+
+	//Camera Boom
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 	USpringArmComponent* CameraBoom;
 
-	/** Follow camera */
+	//Follow Camera
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
 
-	//Input Properties
+	//--Input Properties
 	UPROPERTY(EditAnywhere, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	UInputMappingContext* SkateMappingContext;
 
@@ -44,11 +42,31 @@ class DENISSKATEBOARD_API ASkateCharachter : public ACharacter
 
 	UPROPERTY(EditAnywhere, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	UInputAction* LookAction;
-
+	
+	
+	//--Velocity Control Properties
 	UPROPERTY(EditAnywhere, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 	float AcomulatedVelocity;
 
-	float DesiredVelocity;
+	//--Animation Properties
+	UPROPERTY(EditAnywhere, Category = "Animation", meta = (AllowPrivateAccess = "true"))
+	UAnimationAsset* DefaultAnim;
+
+	UPROPERTY(EditAnywhere, Category = "Animation", meta = (AllowPrivateAccess = "true"))
+	UAnimationAsset* SpeedUpAnim;
+
+	UPROPERTY(EditAnywhere, Category = "Animation", meta = (AllowPrivateAccess = "true"))
+	UAnimationAsset* JumpAnim;
+
+	UPROPERTY(EditAnywhere, Category = "Animation", meta = (AllowPrivateAccess = "true"))
+	float JumpAnimEndTime;
+
+	UPROPERTY(EditAnywhere, Category = "Animation", meta = (AllowPrivateAccess = "true"))
+	bool bIsPlayingJump;
+
+public:
+
+	int32 Score;
 
 
 public:
@@ -66,6 +84,10 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	virtual void Jump() override;
+	
+	void IncreaseScore();
+
 protected:
 
 	/** Called for Forward movement input */
@@ -77,5 +99,7 @@ protected:
 	void IncreaseVelocity(float Value);
 
 	void DecreaseVelocity(float Value);
+
+	void QuitGame();
 
 };

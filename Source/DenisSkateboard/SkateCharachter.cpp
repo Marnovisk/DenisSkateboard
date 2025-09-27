@@ -13,6 +13,8 @@
 
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "GameFramework/PlayerController.h"
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -24,26 +26,19 @@ ASkateCharachter::ASkateCharachter()
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SkeletalMeshAsset(TEXT("/Game/Characters/Mannequins/Meshes/SKM_Manny.SKM_Manny"));
+	// Don't rotate when the controller rotates. Let that just affect the camera.
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationRoll = false;
 
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SkeletalMeshAsset(TEXT("/Game/Animations/Y_Bot_Skateboarding.Y_Bot_Skateboarding"));
+	static ConstructorHelpers::FObjectFinder<UAnimationAsset> DefaultAnimAsset(TEXT("/Game/Animations/Y_Bot_Skateboarding_Anim.Y_Bot_Skateboarding_Anim"));
+	static ConstructorHelpers::FObjectFinder<UAnimationAsset> SpeedUpAnimAsset(TEXT("/Game/Animations/Y_Bot_Skateboarding_Row.Y_Bot_Skateboarding_Row"));
+	static ConstructorHelpers::FObjectFinder<UAnimationAsset> JumpAnimAsset(TEXT("/Game/Animations/Y_Bot_Jumping.Y_Bot_Jumping"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> StaticMeshAsset(TEXT("/Game/Skate/skateboard.skateboard"));
 
 	// Usa o capsule do ACharacter
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
-		
-	//-----Only uncomment this if using as sub clas of APawn and not of ACharacter
-
-	//--SkeltalMesh Setup for pawn
-	/*SKMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SKMesh"));
-	SKMesh->SetupAttachment(RootComponent);
-	SKMesh->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
-	SKMesh->SetRelativeRotation(FRotator(0.0f, 270.0f, 0.0f));
-	SKMesh->SetSkeletalMesh(SkeletalMeshAsset.Object);*/
-
-	//--CapsuleCollision Setup for pawn
-	/*CapsuleCollision = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleCollision"));
-	CapsuleCollision->InitCapsuleSize(42.f, 96.0f);
-	CapsuleCollision->SetCollisionProfileName(TEXT("Pawn"));
-	RootComponent = CapsuleCollision;*/
 
 	if (SkeletalMeshAsset.Succeeded())
 	{
@@ -52,6 +47,33 @@ ASkateCharachter::ASkateCharachter()
 		GetMesh()->SetRelativeRotation(FRotator(0.0f, 270.0f, 0.0f));
 	}
 
+	if (DefaultAnimAsset.Succeeded())
+	{
+		DefaultAnim = DefaultAnimAsset.Object;
+		GetMesh()->PlayAnimation(DefaultAnim, true);
+	}
+
+	if (SpeedUpAnimAsset.Succeeded())
+	{
+		SpeedUpAnim = SpeedUpAnimAsset.Object;
+	}
+
+	if (JumpAnimAsset.Succeeded())
+	{
+		JumpAnim = JumpAnimAsset.Object;
+	}
+
+	
+
+	SMSkateMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SMSkateMesh"));
+	SMSkateMesh->SetRelativeLocation(FVector(0.0f, 0.0f, -5.0f));
+	SMSkateMesh->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));
+	SMSkateMesh->SetupAttachment(GetMesh());
+
+	if (StaticMeshAsset.Succeeded())
+	{
+		SMSkateMesh->SetStaticMesh(StaticMeshAsset.Object);
+	}
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -64,23 +86,45 @@ ASkateCharachter::ASkateCharachter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to ar
 
+	GetCharacterMovement()->BrakingDecelerationWalking = 200.f;
+
 	AcomulatedVelocity = GetCharacterMovement()->MaxWalkSpeed;
+
+	Score = 0;
+	JumpAnimEndTime = 0.f;
+	bIsPlayingJump = false;
 }
 
 // Called when the game starts or when spawned
 void ASkateCharachter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	GetMesh()->PlayAnimation(DefaultAnim, true);
 }
 
 // Called every frame
 void ASkateCharachter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (bIsPlayingJump && GetWorld()->GetTimeSeconds() >= JumpAnimEndTime)
+	{
+		bIsPlayingJump = false;
+
+		if (AcomulatedVelocity > 600 && SpeedUpAnim)
+		{
+			GetMesh()->PlayAnimation(SpeedUpAnim, true);
+		}
+		else if (DefaultAnim)
+		{
+			GetMesh()->PlayAnimation(DefaultAnim, true);
+		}
+	}
+
 	if (GetCharacterMovement()->MaxWalkSpeed != AcomulatedVelocity)
 	{
-		GetCharacterMovement()->MaxWalkSpeed = FMath::FInterpTo(GetCharacterMovement()->MaxWalkSpeed, AcomulatedVelocity + 1, DeltaTime, 1);
-		UE_LOG(LogTemp, Warning, TEXT("MaxVelocity: %f"), GetCharacterMovement()->MaxWalkSpeed);
+		GetCharacterMovement()->MaxWalkSpeed = FMath::FInterpTo(GetCharacterMovement()->MaxWalkSpeed, AcomulatedVelocity, DeltaTime, 1);
 	}
 }
 
@@ -95,28 +139,28 @@ void ASkateCharachter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAxis("SpeedUp", this, &ASkateCharachter::IncreaseVelocity);
 	PlayerInputComponent->BindAxis("Break", this, &ASkateCharachter::DecreaseVelocity);
 
-	// Liga o eixo "LookUp" à função que controla o Pitch (olhar p/ cima e baixo)
+	
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
-
-	// Liga o eixo "LookAround" à função que controla o Yaw (olhar p/ os lados)
 	PlayerInputComponent->BindAxis("LookAround", this, &APawn::AddControllerYawInput);
 
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
+	PlayerInputComponent->BindAction("Exit", IE_Pressed, this, &ASkateCharachter::QuitGame);
+
+}
+
+void ASkateCharachter::IncreaseScore()
+{
+	Score += 1;
 }
 
 void ASkateCharachter::MoveForward(float Value)
 {
 	if (Controller && Value != 0.0f)
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("MOVE"));
-
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-
-		AddMovementInput(Direction, Value);
+		const FVector Forward = GetActorForwardVector();
+		AddMovementInput(Forward, Value);
 	}
 }
 
@@ -124,12 +168,7 @@ void ASkateCharachter::MoveAround(float Value)
 {
 	if (Controller && Value != 0.0f)
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("MOVE"));
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-
-		AddMovementInput(Direction, Value);
+		AddActorLocalRotation(FRotator(0.f, Value, 0.f));
 	}
 	
 }
@@ -142,7 +181,6 @@ void ASkateCharachter::IncreaseVelocity(float Value)
 		{
 			AcomulatedVelocity += Value;
 		}
-		UE_LOG(LogTemp, Warning, TEXT("AcomulatedVelocity: %f"), AcomulatedVelocity);
 	}
 }
 
@@ -153,8 +191,29 @@ void ASkateCharachter::DecreaseVelocity(float Value)
 		if (AcomulatedVelocity > 100)
 		{
 			AcomulatedVelocity += Value;
-		}		
-		UE_LOG(LogTemp, Warning, TEXT("AcomulatedVelocity: %f"), AcomulatedVelocity);
+		}
 	}
 }
 
+void ASkateCharachter::QuitGame()
+{
+	if (APlayerController* PC = Cast<APlayerController>(Controller))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ESC pressed - quitting game..."));
+		UKismetSystemLibrary::QuitGame(GetWorld(), PC, EQuitPreference::Quit, true);
+	}
+}
+
+void ASkateCharachter::Jump()
+{
+	Super::Jump();
+
+	if (JumpAnim && GetMesh()->GetAnimationMode() == EAnimationMode::AnimationSingleNode)
+	{
+		GetMesh()->PlayAnimation(JumpAnim, false);
+
+		float Duration = JumpAnim->GetMaxCurrentTime(); // duração da animação
+		JumpAnimEndTime = GetWorld()->GetTimeSeconds() + Duration;
+		bIsPlayingJump = true;
+	}
+}

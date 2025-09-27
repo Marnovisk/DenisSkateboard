@@ -17,8 +17,7 @@ class DENISSKATEBOARD_API ASkateObstacle : public AActor
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh", meta = (AllowPrivateAccess = "true"))
 	UStaticMeshComponent* SMMesh;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision", meta = (AllowPrivateAccess = "true"))
-	UBoxComponent* BoxCollision;
+	ASkateCharachter* PlayerChar;
 	
 public:	
 	// Sets default values for this actor's properties
