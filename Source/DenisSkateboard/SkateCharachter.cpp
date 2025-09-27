@@ -65,6 +65,8 @@ ASkateCharachter::ASkateCharachter()
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to ar
 
 	AcomulatedVelocity = GetCharacterMovement()->MaxWalkSpeed;
+
+	Score = 0;
 }
 
 // Called when the game starts or when spawned
@@ -104,6 +106,11 @@ void ASkateCharachter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
+}
+
+void ASkateCharachter::IncreaseScore()
+{
+	Score += 1;
 }
 
 void ASkateCharachter::MoveForward(float Value)

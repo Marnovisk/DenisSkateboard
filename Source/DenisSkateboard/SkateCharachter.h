@@ -50,6 +50,10 @@ class DENISSKATEBOARD_API ASkateCharachter : public ACharacter
 
 	float DesiredVelocity;
 
+public:
+
+	int32 Score;
+
 
 public:
 	// Sets default values for this pawn's properties
@@ -65,6 +69,8 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	void IncreaseScore();
 
 protected:
 

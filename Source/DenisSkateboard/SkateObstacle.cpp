@@ -63,6 +63,7 @@ void ASkateObstacle::Tick(float DeltaTime)
         if (ASkateCharachter* Car = Cast<ASkateCharachter>(HitResult.GetActor()))
         {
             UE_LOG(LogTemp, Log, TEXT("LineTrace hit CarCore: %s"), *Car->GetName());
+            Car->IncreaseScore();
         }
 
         // Debug visualization

@@ -3,6 +3,7 @@
 #include "DenisSkateboardGameMode.h"
 #include "DenisSkateboardCharacter.h"
 #include "SkateCharachter.h"
+#include "SkateHUD.h"
 #include "GameFramework/InputSettings.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -16,6 +17,7 @@ ADenisSkateboardGameMode::ADenisSkateboardGameMode()
 	}*/
 
     DefaultPawnClass = ASkateCharachter::StaticClass();
+    HUDClass = ASkateHUD::StaticClass();
 }
 
 void ADenisSkateboardGameMode::StartPlay()
